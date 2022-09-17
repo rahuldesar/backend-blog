@@ -1,20 +1,36 @@
 const blogRouter = require('express').Router();
 const Blog = require('../models/blog');
-
+const User = require('../models/user');
+const jwt = require('jsonwebtoken');
 
 blogRouter.get('/', async (request, response ) => {
-  const blogs = await Blog.find({});
+  const blogs = await Blog.find({}).populate('user',{ username:1 , name : 1 });
   response.json(blogs);
 
 });
 
 blogRouter.post('/', async (request, response) => {
   const blog = new Blog(request.body);
-  console.log(blog);
+  const user = request.user;
+
   if(!blog.title || !blog.url) {
     response.status(400).end();
   }
-  const result = await blog.save();
+
+  const newBlog = new Blog({
+    title: blog.title,
+    author: blog.author,
+    url: blog.url,
+    likes: blog.likes,
+    user: user._id,
+  });
+
+
+  const result = await newBlog.save();
+
+  user.blogs = user.blogs.concat(result._id);
+  await user.save();
+
   response.status(201).json(result);
 });
 
@@ -29,6 +45,17 @@ blogRouter.get('/:id', async(request, response) => {
 
 
 blogRouter.delete('/:id', async (request, response) => {
+
+  const user = request.user;
+
+  const blog = await Blog.findById(request.params.id);
+
+  if(!blog.user.equals(user.id)){
+    console.log(user.id, request.params, blog.user);
+    return response.status(401).json({
+      error : 'Invalid Token. You don\'t have access for this action.',
+    });
+  }
   await Blog.findByIdAndRemove(request.params.id);
   response.status(204).end();
 });

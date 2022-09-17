@@ -8,7 +8,6 @@ const Blog = require('../models/blog');
 
 beforeEach(async () => {
   await Blog.deleteMany({});
-  console.log('cleared');
 
   // const noteObject = helper.initialNotes
   //   .map(note => new Note(note));
@@ -25,7 +24,6 @@ beforeEach(async () => {
 
 
 test('blogs are returned as json', async() => {
-  console.log('entered test');
   await api
     .get('/api/blogs')
     .expect(200)
@@ -57,10 +55,12 @@ test('a valid blog can be added with HTTP POST request', async() => {
     author: 'Michael Chan',
     url: 'https://reactpatterns.com/',
     likes: 7,
+    user: '6325d00a4391d0fbacb09a45',
   };
 
   await api
     .post('/api/blogs')
+    .set('authorization', 'bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InJvb3QyIiwiaWQiOiI2MzI1ZTg3MWI0NzU5MmE4ZDYxMTYyOTciLCJpYXQiOjE2NjM0Mjg3Njh9.jFjIK2Gj1kKskhkR7pv-JwOCz_6tSUaImvgp_gnKTao')
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/);
