@@ -33,6 +33,8 @@ app.get('/', (request, response) => {
 
 app.use(middleware.tokenExtractor);
 app.use(middleware.userExtractor);
+app.use(middleware.requestLogger);
+
 
 
 app.use('/api/blogs', blogRouter);
