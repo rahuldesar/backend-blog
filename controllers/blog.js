@@ -1,7 +1,5 @@
 const blogRouter = require('express').Router();
 const Blog = require('../models/blog');
-const User = require('../models/user');
-const jwt = require('jsonwebtoken');
 
 blogRouter.get('/', async (request, response ) => {
   const blogs = await Blog.find({}).populate('user',{ username:1 , name : 1 });
@@ -26,11 +24,10 @@ blogRouter.post('/', async (request, response) => {
   });
 
 
-  const result = await newBlog.save();
-
+  const result = await newBlog.save()
+    .then(result => result.populate('user',{ username:1 , name : 1 }));
   user.blogs = user.blogs.concat(result._id);
   await user.save();
-
   response.status(201).json(result);
 });
 
@@ -62,15 +59,18 @@ blogRouter.delete('/:id', async (request, response) => {
 
 blogRouter.put('/:id', (request, response, next) => {
   const body = request.body;
-
   const blog = {
     title: body.title,
     author: body.author,
     url: body.url,
     likes: body.likes,
+    user: body.user,
   };
 
   Blog.findByIdAndUpdate(request.params.id, blog, { new: true })
+    .then(incompletelyUpdatedBlog =>
+      incompletelyUpdatedBlog.populate('user',{ username:1 , name : 1 })
+    )
     .then(updatedBlog => {
       response.json(updatedBlog);
     })
